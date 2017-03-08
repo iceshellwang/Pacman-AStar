@@ -1,5 +1,25 @@
-import util
+# challenge_search.py
+# -------
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
+#
+# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
+# The core projects and autograders were primarily created by John DeNero
+# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
+# Student side autograding was added by Brad Miller, Nick Hay, and
+# Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
+"""
+
+Name: Raymond Deng
+Section: COMP3770-01 (Intro To AI)
+Assignment: Challenge Lab Search
+"""
+import heapq
+
+# Import your graph here
 graph = {
     'A': [False, 3, [('H', 6), ('E', 5)]],
     'D': [False, 3, [('E', 2)]],
@@ -10,6 +30,104 @@ graph = {
     'I': [False, 10, []],
 }
 
+"""
+ Data structures useful for implementing SearchAgents
+"""
+class Stack:
+    "A container with a last-in-first-out (LIFO) queuing policy."
+
+    def __init__(self):
+        self.list = []
+
+    def push(self, item):
+        "Push 'item' onto the stack"
+        self.list.append(item)
+
+    def pop(self):
+        "Pop the most recently pushed item from the stack"
+        return self.list.pop()
+
+    def isEmpty(self):
+        "Returns true if the stack is empty"
+        return len(self.list) == 0
+
+
+class Queue:
+    "A container with a first-in-first-out (FIFO) queuing policy."
+
+    def __init__(self):
+        self.list = []
+
+    def push(self, item):
+        "Enqueue the 'item' into the queue"
+        self.list.insert(0, item)
+
+    def pop(self):
+        """
+          Dequeue the earliest enqueued item still in the queue. This
+          operation removes the item from the queue.
+        """
+        return self.list.pop()
+
+    def isEmpty(self):
+        "Returns true if the queue is empty"
+        return len(self.list) == 0
+
+
+class PriorityQueue:
+    """
+      Implements a priority queue data structure. Each inserted item
+      has a priority associated with it and the client is usually interested
+      in quick retrieval of the lowest-priority item in the queue. This
+      data structure allows O(1) access to the lowest-priority item.
+
+      Note that this PriorityQueue does not allow you to change the priority
+      of an item.  However, you may insert the same item multiple times with
+      different priorities.
+    """
+
+    def __init__(self):
+        self.heap = []
+        self.count = 0
+
+    def push(self, item, priority):
+        # FIXME: restored old behaviour to check against old results better
+        # FIXED: restored to stable behaviour
+        entry = (priority, self.count, item)
+        # entry = (priority, item)
+        heapq.heappush(self.heap, entry)
+        self.count += 1
+
+    def pop(self):
+        (_, _, item) = heapq.heappop(self.heap)
+        #  (_, item) = heapq.heappop(self.heap)
+        return item
+
+    def isEmpty(self):
+        return len(self.heap) == 0
+
+
+class PriorityQueueWithFunction(PriorityQueue):
+    """
+    Implements a priority queue with the same push/pop signature of the
+    Queue and the Stack classes. This is designed for drop-in replacement for
+    those two classes. The caller has to provide a priority function, which
+    extracts each item's priority.
+    """
+
+    def __init__(self, priorityFunction):
+        "priorityFunction (item) -> priority"
+        self.priorityFunction = priorityFunction  # store the priority function
+        PriorityQueue.__init__(self)  # super-class initializer
+
+    def push(self, item):
+        "Adds an item to the queue with priority from the priority function"
+        PriorityQueue.push(self, item, self.priorityFunction(item))
+
+
+"""End Structures"""
+
+
 def graphSearch(frontier):
     """
     Once your DFS, BFS, and UCS algorithms work, unify them
@@ -17,11 +135,12 @@ def graphSearch(frontier):
     requires only an object to manage the fringe.
     """
     "*** YOUR CODE HERE ***"
-    # Build the initial node
-    # Push this into the frontier
+    # Set a counter for order of visited nodes
     visitCounter = 1
     closed = set()
+
     # Format of nodes is (actions, cumulativeCost, node/state, visitCount)
+    # Node consists of (isGoalTest, heuristic (list of successors))
     initialState = (list(graph.keys()[0]), 0, graph.items()[0], visitCounter)
     frontier.push(initialState)
 
@@ -38,7 +157,7 @@ def graphSearch(frontier):
             print "No solution"
 
         # Unpack frontier
-        currentActionList, cumulativeCost, currentGraphItem, currentVisitCount = frontier.pop()
+        currentActionList, cumulativeCost, currentGraphItem, currentCount = frontier.pop()
         currentState, currentValues = currentGraphItem
 
         # Print pop and unpack values from node
@@ -63,11 +182,9 @@ def graphSearch(frontier):
             # Append it to the frontier
             print "\n== Successors =="
             for nextState, nextCost in currentSuccessors:
-
                 # Build the cumulative action list
                 tempActionList = currentActionList[:]
                 tempActionList.append(nextState)
-                print tempActionList
 
                 # Build the cumulative cost to get to successor state
                 tempCostList = cumulativeCost
@@ -75,6 +192,8 @@ def graphSearch(frontier):
 
                 # Get the item from the dictionary
                 # Increment the visited counter
+
+                print tempActionList
                 graphItem = graph.get(nextState)
                 visitCounter += 1
 
@@ -84,55 +203,8 @@ def graphSearch(frontier):
 
                 # util.raiseNotDefined()
 
-def costOfActionDFS(item):
-    """
-    Uses the order of what was inserted last as highest priority
 
-    :param item: current item as a list (state, action, cost)
-    :return: cost or priority of item
-    """
-    return item[3] * -1
-
-
-def costOfActionBFS(item):
-    """
-    Uses the order of when it was inserted for higher priority
-    FIFO
-
-    :param item: current item as a list (state, action, cost)
-    :return: cost or priority of item
-    """
-    return item[3]
-
-def costOfActionUCS(item):
-    """
-    Uses the lowest cumulative cost for the higher priority
-    """
-    return item[1]
-
-
-def costOfActionGreedy(item):
-    """
-    Uses lowest heuristic of item for highest priority
-    :param item:
-    :return:
-    """
-    return item[2][1][1]
-
-def costofActionIDDFS(item):
-    """
-
-    Similar to DFS but only deepens to x depth
-    :param item:
-    :return:
-    @TODO
-    """
-
-    return item[3] * -1
-
-
-
-
+""" SEARCH ALGORITHM DEFINITIONS """
 def depthFirstSearch():
     """
     Uses Stack
@@ -151,12 +223,10 @@ def depthFirstSearch():
     """
     "*** YOUR CODE HERE ***"
 
-    inputStructure = util.Stack()
-
-    # UNCOMMENT TO RUN EXTRA CREDIT PROBLEM
-    inputStructure = util.PriorityQueueWithFunction(costOfActionDFS)
+    # inputStructure = util.Stack()
+    # Priority is set by the last node being popped first (LIFO)
+    inputStructure = PriorityQueueWithFunction(lambda node: node[3] * -1)
     return graphSearch(inputStructure)
-
     # util.raiseNotDefined()
 
 
@@ -167,10 +237,9 @@ def breadthFirstSearch():
     """
     "*** YOUR CODE HERE ***"
 
-    inputStructure = util.Queue()
-
-    # UNCOMMENT TO RUN EXTRA CREDIT PROBLEM
-    inputStructure = util.PriorityQueueWithFunction(costOfActionBFS)
+    # inputStructure = util.Queue()
+    # Priority is set by order of entry (FIFO)
+    inputStructure = PriorityQueueWithFunction(lambda node: node[3])
     return graphSearch(inputStructure)
 
     # util.raiseNotDefined()
@@ -183,31 +252,61 @@ def uniformCostSearch():
     Search the node of least total cost first.
     """
     "*** YOUR CODE HERE ***"
-
-    inputPriorityQueue = util.PriorityQueueWithFunction(costOfActionUCS)
+    # Priority is set by least cumulative cost
+    inputPriorityQueue = PriorityQueueWithFunction(lambda node: node[1])
     return graphSearch(inputPriorityQueue)
 
     # util.raiseNotDefined()
 
+
 def greedySearch():
-    inputStructure = util.PriorityQueueWithFunction(costOfActionGreedy)
+    # Priority is set by lowest heuristic
+    inputStructure = PriorityQueueWithFunction(lambda node: node[2][1][1])
     return graphSearch(inputStructure)
 
 
 def id_dfs():
     # FIXME: Write algorithm to iterate depth, write priority in costOfActionIDDFS
-    inputStructure = util.PriorityQueueWithFunction(costofActionIDDFS)
+    depth = 0
+    while True:
+        result = depthLimitedSearch(graph, depth)
+        if result != False:
+            return result
+        # No solution at all
+        elif result == None:
+            return None
+
+        depth +=1
+
+    # inputStructure = PriorityQueueWithFunction(lambda node: node[3] * -1)
+    # return graphSearch(inputStructure)
+
+def depthLimitedSearch(problem, depth):
+    return recursiveDLS(list(graph.keys()[0]), 0, graph.items()[0])
+
+
+def recursiveDLS(problem, state, depth):
+    print 5
+
+def a_star():
+    inputStructure = PriorityQueueWithFunction(lambda node: node[2][1][1] + node[1])
     return graphSearch(inputStructure)
 
 
+""" END SEARCH ALGORITHM DEFINITION """
 
-print "******************DFS******************\n"
-print depthFirstSearch()
-print "******************ID-DFS******************\n"
 print id_dfs()
-print "******************BFS******************\n"
-print breadthFirstSearch()
-print "******************UCS******************\n"
-print uniformCostSearch()
-print "******************GREEDY******************\n"
-print greedySearch()
+
+# print "******************DFS******************\n"
+# print depthFirstSearch()
+# print "******************ID-DFS******************\n"
+# print id_dfs()
+# print "******************BFS******************\n"
+# print breadthFirstSearch()
+# print "******************UCS******************\n"
+# print uniformCostSearch()
+# print "******************GREEDY******************\n"
+# print greedySearch()
+# print "******************A STAR******************\n"
+# print a_star()
+

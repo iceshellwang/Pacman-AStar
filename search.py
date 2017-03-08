@@ -89,30 +89,23 @@ def graphSearch(problem, frontier):
     closed = set()
     initialState = (list(), 0, problem.getStartState())
     frontier.push(initialState)
-
     while True:
         if frontier.isEmpty():
+            print "No solution"
             return None
 
         currentActionList, currentCost, currentState = frontier.pop()
-        # print "Before checking goal state ", node
         # Check if the current state is the goal state
-        print "Checking Goal State: ", currentState
         if problem.isGoalState(currentState):
             return currentActionList
-
-       # print "After checking goal state ", node
 
         # Check if been to this state location
         if currentState not in closed:
 
             # Add it to the closed loop
             # Prevents coming back to an old state
-            # print "Before adding to closed set", node
             closed.add(currentState)
-            # print "After adding to closed set", node
             successorStates = problem.getSuccessors(currentState)
-            # print "After generating successors", successorStates
 
             # Generate new successor nodes
             # Add it to the current list of actions
@@ -128,50 +121,9 @@ def graphSearch(problem, frontier):
 
                 # Insert the node
                 insertedNode = (tempActionList, tempCostList, nextState)
-                # print "Inserting: ",insertedNode
                 frontier.push(insertedNode)
-                # print "Frontier has: ", frontier
 
                 # util.raiseNotDefined()
-
-def costOfActionDFS(item):
-    """
-    Priority function for DepthFirstSearch
-    Should be popping the most recent item inserted first(FILO)
-    Length of item[1] will represent when they were pushed into structure
-
-    The longer the length of item[1] the sooner it should be popped
-    Return a number so that the items inserted first have lower priority
-
-    :param item: current item as a list (state, action, cost)
-    :return: cost or priority of item
-    """
-    return sys.maxint - len(item[1])
-
-
-
-def costOfActionBFS(item):
-    """
-    Priority function for DepthFirstSearch
-    Should be popping in order of when they were pushed(FIFO)
-    Length of item[1] will represent when they were pushed into structure
-
-    The shorter the length of item[1], the sooner it should be popped
-    Return a number so that the items inserted first have higher priority
-
-    :param item: current item as a list (state, action, cost)
-    :return: cost or priority of item
-    """
-    return len(item[1]) - sys.maxint
-
-def costOfActionUCS(item):
-    """
-    Priority function used in PriorityQueueWithFunction below
-    Return what the cost is (as item[2] larger, ends up in the bottom of priority)
-    :param item: current item as a list (state, action, cost)
-    :return: cost or priority of the item
-    """
-    return item[1]
 
 
 def depthFirstSearch(problem):
@@ -195,7 +147,7 @@ def depthFirstSearch(problem):
     inputStructure = util.Stack()
 
     # UNCOMMENT TO RUN EXTRA CREDIT PROBLEM
-    # inputStructure = util.PriorityQueueWithFunction(costOfActionDFS)
+    # inputStructure = util.PriorityQueueWithFunction(lambda node: node[3] * -1)
 
     return graphSearch(problem, inputStructure)
 
@@ -212,7 +164,7 @@ def breadthFirstSearch(problem):
     inputStructure = util.Queue()
 
     # UNCOMMENT TO RUN EXTRA CREDIT PROBLEM
-    # inputStructure = util.PriorityQueueWithFunction(costOfActionBFS)
+    # inputStructure = util.PriorityQueueWithFunction(lambda node: node[3])
 
     return graphSearch(problem, inputStructure)
 
@@ -227,7 +179,7 @@ def uniformCostSearch(problem):
     """
     "*** YOUR CODE HERE ***"
 
-    inputPriorityQueue = util.PriorityQueueWithFunction(costOfActionUCS)
+    inputPriorityQueue = util.PriorityQueueWithFunction(lambda node: node[1])
     return graphSearch(problem, inputPriorityQueue)
 
     # util.raiseNotDefined()

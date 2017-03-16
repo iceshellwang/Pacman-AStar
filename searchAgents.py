@@ -292,6 +292,9 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         # Please add any code here which you would like to use
         # in initializing the problem
+
+        # Added to be used for heuristic
+        # Used for MazeDistance
         self.startingGameState = startingGameState
 
         "*** YOUR CODE HERE ***"
@@ -401,7 +404,7 @@ def cornersHeuristic(state, problem):
     # Continue looping to compute the ..
     # total distance to the nearest corners remaining
     # REMEMBER Change current position to the closest corner visited
-    searchAlgorithm = mazeDistance
+    distanceAlgorithm = mazeDistance
 
     while cornersLeft:
         distanceToClosestCorner = 0
@@ -409,10 +412,10 @@ def cornersHeuristic(state, problem):
         # Find the closest corner with the corners remaining
         for currentCorner in cornersLeft:
 
-            if searchAlgorithm == manhattanDistance:
-                tempDistance = searchAlgorithm(currentPosition, currentCorner)
+            if distanceAlgorithm == manhattanDistance:
+                tempDistance = distanceAlgorithm(currentPosition, currentCorner)
             else:
-                tempDistance = searchAlgorithm(currentPosition, currentCorner, problem.startingGameState)
+                tempDistance = distanceAlgorithm(currentPosition, currentCorner, problem.startingGameState)
 
             # Save the distance to closest corner and corner
             if distanceToClosestCorner == 0 or \
@@ -426,7 +429,7 @@ def cornersHeuristic(state, problem):
         totalDistanceToGoal += distanceToClosestCorner
         currentPosition = closestCorner
         cornersLeft.remove(closestCorner)
-        searchAlgorithm = manhattanDistance
+        distanceAlgorithm = manhattanDistance
 
 
     return totalDistanceToGoal
@@ -525,21 +528,20 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    """@TODO"""
 
 
     position, foodGrid = state
     foodCoordinates = foodGrid.asList()
-
     distanceToFarthestFood = 0
 
     # NOTES:
-    # Distance Algorithms
+    # Distance Algorithm Results
     # Euclidean expands 10352
     # Manhattan expands 9551
     # MazeDistance expands 4137
 
     # Find the farthest food via distance
+    # Use mazeDistance to incorporate walls
     for food in foodCoordinates:
         tempDistanceToFood = mazeDistance(position, food, problem.startingGameState)
 
@@ -550,8 +552,9 @@ def foodHeuristic(state, problem):
 
     return distanceToFarthestFood
 
+
 def euclideanDistance(xy1, xy2):
-    return ((xy1[0] - xy2[0])**2 + (xy1[1] - xy2[1])**2)** (.5)
+    return ((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2) ** .5
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
